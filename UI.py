@@ -1,3 +1,5 @@
+import tkinter
+from PIL import ImageTk
 
 
 class UI():
