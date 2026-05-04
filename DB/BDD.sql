@@ -57,43 +57,6 @@ CREATE TABLE exchange_offers (
 );
 
 
-CREATE TABLE messages (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    listing_id INT NOT NULL,
-    sender_id INT NOT NULL,
-    receiver_id INT NOT NULL,
-    content TEXT,
-
-    FOREIGN KEY (listing_id) REFERENCES listings(id),
-    FOREIGN KEY (sender_id) REFERENCES users(id),
-    FOREIGN KEY (receiver_id) REFERENCES users(id)
-);
-
-
-CREATE TABLE favorites (
-    user_id INT,
-    listing_id INT,
-
-    PRIMARY KEY (user_id, listing_id),
-
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (listing_id) REFERENCES listings(id)
-);
-
-
-CREATE TABLE reviews (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    exchange_offer_id INT,
-    author_id INT,
-    target_user_id INT,
-    rating INT,
-    comment TEXT,
-
-    FOREIGN KEY (exchange_offer_id) REFERENCES exchange_offers(id),
-    FOREIGN KEY (author_id) REFERENCES users(id),
-    FOREIGN KEY (target_user_id) REFERENCES users(id)
-);
-
 
 INSERT INTO users (firstname, lastname, email, password_hash, city) VALUES
 ('Martin','Dupont','martin.dupont@mail.com','mdp123','Paris'),
@@ -156,7 +119,7 @@ WHERE status = 'active';
 SELECT listings.title, users.firstname, users.lastname FROM listings
 JOIN users ON listings.user_id = users.id;
 
-#PERMETTRE A L4UTILISATEUR DE VOIR SES FAVORIS
+#PERMETTRE A L UTILISATEUR DE VOIR SES FAVORIS
 SELECT listings.title, categories.name FROM favorites
 JOIN listings ON favorites.listing_id = listings.id
 JOIN categories ON listings.category_id = categories.id
@@ -168,4 +131,3 @@ AND users.lastname = 'Martinez';
 SELECT exchange_offers.proposed_item, exchange_offers.message FROM exchange_offers
 JOIN listings ON exchange_offers.listing_id = listings.id
 WHERE listings.title = 'Tondeuse Bosch';
-
