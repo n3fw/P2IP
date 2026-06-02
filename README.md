@@ -1,6 +1,6 @@
 # Consignes pour l'aspect graphique (UI)
 
-1. Chaque fenêtre correspond à une fenêtre (exemple fenêtre des messages correpond à une méthode messWindow)
+1. Chaque fenêtre correspond à une méthode (exemple fenêtre des messages correpond à une méthode messWindow)
 2. Les fenêtres peuvent utiliser d'autres fonctions annexes si nécéssaire, toute DOIVENT également faire partie de la classe UI
 3. Une fenêtre n'utilise pas forcément tous les attraibuts donnés dans la classe UI, mais utilise obligatoirement `self.root` comme base de la fenêtre (cf `__init__(self)`)
 4. Pour initialiser une nouvelle fenêtre, au début d'une méthode, utiliser `self.root = tk.Tk()` pour l'initialiser

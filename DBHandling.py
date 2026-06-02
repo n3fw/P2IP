@@ -24,7 +24,7 @@ class DBHandler:
             password = pwd,
             port = 3306,
             charset = "utf8mb4",
-            database = "library"
+            database = "db_ecolend"
         )
 
         self.cursor = self.cnx.cursor()
