@@ -12,6 +12,7 @@ class DBHandler:
     def __init__(self):
         self.cnx: p.connections.Connection = None
         self.cursor: p.cursors.Cursor = None
+        self.connect_DB("p3rr1goau")
 
     def connect_DB(self, pwd: str):
         """
@@ -24,7 +25,7 @@ class DBHandler:
             password = pwd,
             port = 3306,
             charset = "utf8mb4",
-            database = "db_ecolend"
+            database = "jardinage_exchange"
         )
 
         self.cursor = self.cnx.cursor()
