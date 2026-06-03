@@ -12,7 +12,6 @@ class UI():
         self.icon = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ressources", "main_icon.ico")
         self.progress = None
         self.db = db_handler
-        self.current_user_id = 1
         self.font = "Arial"
     
     def resetID(self):
@@ -62,7 +61,7 @@ class UI():
         uEntry.place_configure(relx = 0.255, rely = 0.48)
 
         pVar = tk.StringVar()
-        pEntry = tk.Entry(self.root, width = 40, textvariable = pVar, bg = "#DBD9D9", fg = "black")
+        pEntry = tk.Entry(self.root, width = 40, textvariable = pVar, show="•", bg = "#DBD9D9", fg = "black")
         pEntry.place_configure(relx = 0.255, rely = 0.62)
 
         CreateButton = tk.Button(self.root, text = "Créer un compte", command=create)
@@ -89,7 +88,7 @@ class UI():
         self.root.configure(bg="white")
 
         def retour():
-            self.action_id = 1
+            self.action_id = -1
             self.root.destroy()
 
         def valider():
@@ -223,7 +222,7 @@ class UI():
         self.cat_var = tk.StringVar(self.root, value="Toutes")
 
         def go_to_profil():
-            self.action_id = 7
+            self.action_id = 0
             self.root.quit()
             
         def go_to_liste_annonces():
@@ -263,8 +262,8 @@ class UI():
         self.root.configure(bg="#F4F6F8")
 
         def go_back():
-            self.action_id = 2 
-            self.root.quit()
+            self.action_id = -1 
+            self.root.destroy()
 
         def apply_filters(*args):
             print("Filtrage à implémenter dynamiquement !")
@@ -311,17 +310,16 @@ class UI():
             tk.Label(container, text="Aucune annonce ne correspond à votre recherche.", bg="#F4F6F8", fg="#6B7280").pack()
 
         self.root.mainloop()
-        self.root.destroy()
 
-    def profilWindow(self):
+    def profilWindow(self, id):
         self.root = tk.Tk()
         self.root.title("P2IP – Mon Profil") 
         self.root.geometry(self.size)
         self.root.configure(bg="#F4F6F8") 
 
         user_data = self.db.c_query(
-            "SELECT firstname, lastname, city FROM users WHERE id = %s", 
-            (self.current_user_id,), 
+            "SELECT firstname, lastname, city FROM Users WHERE id = %s", 
+            (id), 
             ret=True
         )
         
@@ -335,12 +333,12 @@ class UI():
             JOIN categories C ON L.category_id = C.id
             WHERE L.user_id = %s
         """
-        mes_annonces_db = self.db.c_query(query_annonces, (self.current_user_id,), ret=True)
+        mes_annonces_db = self.db.c_query(query_annonces, (id), ret=True)
 
         self.active_tab = tk.StringVar(self.root, value="annonces") 
 
         def go_back():
-            self.action_id = 2
+            self.action_id = -1
             self.root.quit()
 
         def switch_tab(key):
