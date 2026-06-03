@@ -197,7 +197,7 @@ class UI():
         self.root.mainloop()
         self.root.destroy()
 
-    def accueilWindow(self):
+    def accueilWindow(self, user_id):
         """
         fenêtre d'acceuil qui affiche les annonces actuelles, sur laquelle est branché le programme après connection / creation de compte
         """
@@ -215,8 +215,9 @@ class UI():
             JOIN categories C ON L.category_id = C.id
             JOIN users U ON L.user_id = U.id
             WHERE L.status = 'active'
+            AND U.id != %s
         """
-        annonces_db = self.db.s_query(query_annonces, ret=True)
+        annonces_db = self.db.c_query(query_annonces, (user_id), ret=True)
         
         self.search_var = tk.StringVar(self.root)
         self.cat_var = tk.StringVar(self.root, value="Toutes")
@@ -255,7 +256,7 @@ class UI():
         self.root.mainloop()
         self.root.destroy()
 
-    def listeAnnoncesWindow(self):
+    def listeAnnoncesWindow(self, user_id):
         self.root = tk.Tk()
         self.root.title("P2IP – Liste des annonces")
         self.root.geometry(self.size) 
@@ -269,13 +270,14 @@ class UI():
             print("Filtrage à implémenter dynamiquement !")
 
         query = """
-            SELECT L.title, C.name, U.city, L.tool_condition, L.description
+            SELECT L.title, C.name, U.city, L.tool_condition, L.description, L.id
             FROM listings L
             JOIN categories C ON L.category_id = C.id
             JOIN users U ON L.user_id = U.id
             WHERE L.status = 'active'
+            AND U.id != %s
         """
-        annonces = self.db.s_query(query, ret=True)
+        annonces = self.db.c_query(query, (user_id), ret=True)
 
         topbar = tk.Frame(self.root, bg="#2D6A4F", padx=16, pady=10)
         topbar.pack(fill="x")
@@ -293,6 +295,10 @@ class UI():
 
         if annonces:
             for a in annonces:
+                def go_to_detail_liste(annonce_id):
+                    self.action_id = annonce_id
+                    self.root.destroy()
+
                 card = tk.Frame(container, bg="#FFFFFF", relief="flat", bd=1, padx=16, pady=12)
                 card.pack(fill="x", pady=6)
                 
@@ -306,6 +312,8 @@ class UI():
                 
                 tk.Label(card, text=a[4][:100] + "..." if len(a[4]) > 100 else a[4], 
                          font=("Helvetica", 9), fg="#6B7280", bg="#FFFFFF", wraplength=600, justify="left").pack(anchor="w")
+                tk.Button(card, text="Voir le détail →", bg="#2D6A4F", fg="#FFFFFF", relief="flat", font=("Helvetica", 10, "bold"), cursor="hand2", padx=12, pady=4, 
+                          command=lambda a_id=a[5]: go_to_detail_liste(a_id)).pack(anchor="e", pady=5)
         else:
             tk.Label(container, text="Aucune annonce ne correspond à votre recherche.", bg="#F4F6F8", fg="#6B7280").pack()
 
@@ -340,6 +348,10 @@ class UI():
         def go_back():
             self.action_id = -1
             self.root.quit()
+        
+        def post_new():
+            self.action_id = 0
+            self.root.quit()
 
         def switch_tab(key):
             self.active_tab.set(key)
@@ -362,7 +374,7 @@ class UI():
         def display_annonces_tab():
             tk.Button(body_frame, text="+ Publier une nouvelle annonce", bg="#52B788", fg="#FFFFFF", 
                       relief="flat", font=("Helvetica", 11, "bold"), cursor="hand2", pady=8,
-                      command=lambda: messagebox.showinfo("Navigation", "→ Formulaire de publication")).pack(anchor="e", pady=(0, 12))
+                      command=post_new).pack(anchor="e", pady=(0, 12))
             
             if mes_annonces_db:
                 for a in mes_annonces_db: 
@@ -410,6 +422,173 @@ class UI():
         body_frame.pack(fill="both", expand=True, padx=20, pady=16) 
 
         switch_tab("annonces")
+
+        self.root.mainloop()
+        self.root.destroy()
+    
+    def creationAnnonceWindow(self, id):
+        self.root = tk.Tk()
+        self.root.geometry("600x650")
+        self.root.title("EcoLend - Publier une annonce")
+        self.root.configure(bg="#F4F6F8")
+
+        cats_db = self.db.s_query("SELECT id, name FROM categories", ret=True)
+        # On crée un dictionnaire pour lier le nom de la catégorie à son ID
+        cat_dict = {c[1]: c[0] for c in (cats_db or [])}
+        cat_names = list(cat_dict.keys())
+        if not cat_dict:
+            cat_dict = {
+                "Outillage": 1,
+                "Jardinage": 2,
+                "Sport & Loisirs": 3,
+                "Électronique": 4,
+                "Mobilier": 5,
+                "Autre": 6
+            }
+            
+        cat_names = list(cat_dict.keys())
+
+        # Variables du formulaire
+        titreVar = tk.StringVar(self.root)
+        catVar = tk.StringVar(self.root)
+        etatVar = tk.StringVar(self.root)
+
+        def annuler():
+            self.action_id = 7 # Retour vers le profil
+            self.root.quit()
+
+        def valider():
+            titre = titreVar.get().strip()
+            categorie_name = catVar.get()
+            etat = etatVar.get()
+            description = descText.get("1.0", tk.END).strip()
+
+            if not titre or not categorie_name or not etat or not description:
+                messagebox.showwarning("Formulaire incomplet", "Veuillez remplir tous les champs.")
+                return
+
+            try:
+                # On récupère l'ID de la catégorie choisie
+                cat_id = cat_dict[categorie_name]
+                
+                # Insertion dans la base de données
+                query = """
+                    INSERT INTO listings (user_id, category_id, title, description, tool_condition, status) 
+                    VALUES (%s, %s, %s, %s, %s, 'active')
+                """
+                self.db.c_query(query, (id, cat_id, titre, description, etat), ret=False)
+                
+                messagebox.showinfo("Succès", "Ton objet a bien été ajouté au catalogue !")
+                self.action_id = 7 # Retour vers le profil pour voir l'annonce apparaître
+                self.root.quit()
+                
+            except Exception as e:
+                messagebox.showerror("Erreur BDD", f"Impossible de publier l'annonce.\nErreur : {e}")
+
+        topbar = tk.Frame(self.root, bg="#2D6A4F", padx=16, pady=10)
+        topbar.pack(fill="x")
+        tk.Button(topbar, text="← Annuler", bg="#2D6A4F", fg="#B7E4C7", relief="flat", font=("Helvetica", 11), cursor="hand2", command=annuler).pack(side="left")
+        tk.Label(topbar, text=" Nouvelle Annonce", font=("Helvetica", 14, "bold"), fg="#FFFFFF", bg="#2D6A4F").pack(side="left", padx=16)
+
+        form_frame = tk.Frame(self.root, bg="#FFFFFF", padx=40, pady=30, relief="flat", bd=1)
+        form_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        tk.Label(form_frame, text="Que souhaitez-vous proposer ?", font=("Helvetica", 16, "bold"), bg="#FFFFFF", fg="#1B1B2F").pack(pady=(0, 20), anchor="w")
+
+        # Champ : Titre
+        tk.Label(form_frame, text="Titre de l'objet :", font=("Helvetica", 11, "bold"), bg="#FFFFFF", fg="#6B7280").pack(anchor="w")
+        tk.Entry(form_frame, textvariable=titreVar, font=("Helvetica", 11), bg="#F4F6F8", relief="flat").pack(fill="x", ipady=6, pady=(5, 15))
+
+        # Champ : Catégorie
+        tk.Label(form_frame, text="Catégorie :", font=("Helvetica", 11, "bold"), bg="#FFFFFF", fg="#6B7280").pack(anchor="w")
+        from tkinter import ttk
+        cat_cb = ttk.Combobox(form_frame, textvariable=catVar, values=cat_names, state="readonly", font=("Helvetica", 11))
+        cat_cb.pack(fill="x", ipady=4, pady=(5, 15))
+
+        # Champ : État de l'objet
+        tk.Label(form_frame, text="État de l'objet :", font=("Helvetica", 11, "bold"), bg="#FFFFFF", fg="#6B7280").pack(anchor="w")
+        etats = ["Neuf", "Très bon", "Bon", "Satisfaisant", "Usé"]
+        etat_cb = ttk.Combobox(form_frame, textvariable=etatVar, values=etats, state="readonly", font=("Helvetica", 11))
+        etat_cb.pack(fill="x", ipady=4, pady=(5, 15))
+
+        # Champ : Description
+        tk.Label(form_frame, text="Description détaillée :", font=("Helvetica", 11, "bold"), bg="#FFFFFF", fg="#6B7280").pack(anchor="w")
+        descText = tk.Text(form_frame, font=("Helvetica", 11), bg="#F4F6F8", relief="flat", height=6)
+        descText.pack(fill="x", pady=(5, 20))
+
+        # Bouton Valider
+        tk.Button(form_frame, text="Publier l'annonce", bg="#52B788", fg="#FFFFFF", relief="flat", font=("Helvetica", 12, "bold"), cursor="hand2", pady=10, command=valider).pack(fill="x")
+
+        self.root.mainloop()
+        self.root.destroy()
+
+    def detailAnnonceWindow(self, annonce_id):
+        self.root = tk.Tk()
+        self.root.title("P2IP - Détails de l'annonce")
+        self.root.geometry(self.size)
+        self.root.configure(bg="#F4F6F8")
+
+        # 1. Récupération des données de l'annonce spécifique
+        query = """
+            SELECT L.title, C.name, U.city, L.tool_condition, L.description, U.firstname
+            FROM listings L
+            JOIN categories C ON L.category_id = C.id
+            JOIN users U ON L.user_id = U.id
+            WHERE L.id = %s
+        """
+        result = self.db.c_query(query, (annonce_id), ret=True)
+        if not result:
+            self.action_id = -1 # Retour sécurité si l'annonce n'existe plus
+            self.root.quit()
+            return
+            
+        titre, categorie, ville, etat, description, proprietaire = result[0]
+
+        # 2. Fonctions des boutons
+        def go_back():
+            self.action_id = -1 # Retour à l'accueil
+            self.root.quit()
+
+        def reserver():
+            # Fenêtre popup de confirmation OUI / NON
+            confirm = messagebox.askyesno("Confirmation", "Êtes-vous certain de vouloir réserver cet objet ?")
+            if confirm:
+                # Si OUI, on met à jour le statut dans la base de données
+                update_query = "UPDATE listings SET status = 'réservé' WHERE id = %s"
+                self.db.c_query(update_query, (self.selected_annonce_id,), ret=False)
+                
+                messagebox.showinfo("Succès", "L'objet a bien été réservé !")
+                self.action_id = 2 # Retour à l'accueil pour constater qu'il a disparu
+                self.root.destroy()
+
+        # 3. Construction de l'interface
+        topbar = tk.Frame(self.root, bg="#2D6A4F", padx=16, pady=10)
+        topbar.pack(fill="x")
+        tk.Button(topbar, text="← Retour", bg="#2D6A4F", fg="#B7E4C7", relief="flat", font=("Helvetica", 11), cursor="hand2", command=go_back).pack(side="left")
+        tk.Label(topbar, text=" Détails de l'objet", font=("Helvetica", 14, "bold"), fg="#FFFFFF", bg="#2D6A4F").pack(side="left", padx=16)
+
+        body = tk.Frame(self.root, bg="#F4F6F8", padx=40, pady=20)
+        body.pack(fill="both", expand=True)
+
+        # Espace pour une future photo
+        photo_frame = tk.Frame(body, bg="#D1D5DB", width=400, height=250)
+        photo_frame.pack(pady=10)
+        photo_frame.pack_propagate(False)
+        tk.Label(photo_frame, text="[Emplacement Photo de l'objet]", bg="#D1D5DB", fg="#6B7280", font=("Helvetica", 12, "italic")).pack(expand=True)
+
+        # Informations principales
+        tk.Label(body, text=titre, font=("Helvetica", 20, "bold"), bg="#F4F6F8", fg="#1B1B2F").pack(pady=(15, 5))
+        info_text = f"🏷️ Catégorie : {categorie}   |   📍 Lieu : {ville}   |   ⭐ État : {etat}\n👤 Proposé par : {proprietaire}"
+        tk.Label(body, text=info_text, font=("Helvetica", 12), bg="#F4F6F8", fg="#6B7280").pack(pady=5)
+
+        # Description
+        desc_frame = tk.Frame(body, bg="#FFFFFF", padx=20, pady=15, relief="flat", bd=1)
+        desc_frame.pack(fill="x", pady=20)
+        tk.Label(desc_frame, text="Description :", font=("Helvetica", 12, "bold"), bg="#FFFFFF", fg="#1B1B2F").pack(anchor="w")
+        tk.Label(desc_frame, text=description, font=("Helvetica", 11), bg="#FFFFFF", fg="#6B7280", wraplength=600, justify="left").pack(anchor="w", pady=5)
+
+        # Bouton d'action
+        tk.Button(body, text="💳 Réserver cet objet", bg="#52B788", fg="#FFFFFF", font=("Helvetica", 13, "bold"), relief="flat", cursor="hand2", padx=20, pady=10, command=reserver).pack(pady=10)
 
         self.root.mainloop()
         self.root.destroy()
