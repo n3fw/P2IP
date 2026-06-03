@@ -223,10 +223,12 @@ class UI():
         self.cat_var = tk.StringVar(self.root, value="Toutes")
 
         def go_to_profil():
+            canvas.unbind_all("<MouseWheel>")
             self.action_id = 0
             self.root.quit()
             
         def go_to_liste_annonces():
+            canvas.unbind_all("<MouseWheel>")
             self.action_id = 1
             self.root.quit()
 
@@ -241,8 +243,27 @@ class UI():
         tk.Button(topbar, text="Rechercher (Voir Liste)", bg="#52B788", fg="#FFFFFF", relief="flat",
                   command=go_to_liste_annonces).pack(side="right", padx=10)
 
-        body = tk.Frame(self.root, bg="#F4F6F8")
-        body.pack(fill="both", expand=True, padx=16, pady=12)
+        main_container = tk.Frame(self.root, bg="#F4F6F8")
+        main_container.pack(fill="both", expand=True, padx=16, pady=12)
+
+        canvas = tk.Canvas(main_container, bg="#F4F6F8", highlightthickness=0)
+        scrollbar = tk.Scrollbar(main_container, orient="vertical", command=canvas.yview)
+        body = tk.Frame(canvas, bg="#F4F6F8")
+        body.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=body, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        def _on_mousewheel(event):
+            # On calcule la taille totale du contenu
+            bbox = canvas.bbox("all")
+            # On ne scroll QUE si le contenu est plus grand que la zone visible
+            if bbox and bbox[3] > canvas.winfo_height():
+                canvas.yview_scroll(int(-1(event.delta/120)), "units")
+
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
         
         tk.Label(body, text="Annonces récentes :", font=("Helvetica", 14, "bold"), bg="#F4F6F8").pack(anchor="w")
         
@@ -263,11 +284,9 @@ class UI():
         self.root.configure(bg="#F4F6F8")
 
         def go_back():
+            canvas.unbind_all("<MouseWheel>")
             self.action_id = -1 
             self.root.destroy()
-
-        def apply_filters(*args):
-            print("Filtrage à implémenter dynamiquement !")
 
         query = """
             SELECT L.title, C.name, U.city, L.tool_condition, L.description, L.id
@@ -287,8 +306,26 @@ class UI():
         tk.Label(topbar, text=" P2IP - Catalogue", font=("Helvetica", 16, "bold"),
                  fg="#FFFFFF", bg="#2D6A4F").pack(side="left", padx=16)
 
-        container = tk.Frame(self.root, bg="#F4F6F8")
-        container.pack(fill="both", expand=True, padx=16, pady=12)
+        main_container = tk.Frame(self.root, bg="#F4F6F8")
+        main_container.pack(fill="both", expand=True, padx=16, pady=12)
+
+        canvas = tk.Canvas(main_container, bg="#F4F6F8", highlightthickness=0)
+        scrollbar = tk.Scrollbar(main_container, orient="vertical", command=canvas.yview)
+        container = tk.Frame(canvas, bg="#F4F6F8")
+
+        container.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=container, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        def _on_mousewheel(event):
+            bbox = canvas.bbox("all")
+            if bbox and bbox[3] > canvas.winfo_height():
+                canvas.yview_scroll(int(-1(event.delta/120)), "units")
+
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
         tk.Label(container, text=f"{len(annonces) if annonces else 0} annonce(s) trouvée(s)", 
                  font=("Helvetica", 11, "bold"), bg="#F4F6F8").pack(anchor="w", pady=(0, 10))
@@ -346,10 +383,12 @@ class UI():
         self.active_tab = tk.StringVar(self.root, value="annonces") 
 
         def go_back():
+            canvas.unbind_all("<MouseWheel>")
             self.action_id = -1
             self.root.quit()
         
         def post_new():
+            canvas.unbind_all("<MouseWheel>")
             self.action_id = 0
             self.root.quit()
 
@@ -418,8 +457,25 @@ class UI():
 
         tk.Frame(self.root, bg="#D1D5DB", height=1).pack(fill="x")
 
-        body_frame = tk.Frame(self.root, bg="#F4F6F8")
-        body_frame.pack(fill="both", expand=True, padx=20, pady=16) 
+        main_container = tk.Frame(self.root, bg="#F4F6F8")
+        main_container.pack(fill="both", expand=True, padx=20, pady=16)
+
+        canvas = tk.Canvas(main_container, bg="#F4F6F8", highlightthickness=0)
+        scrollbar = tk.Scrollbar(main_container, orient="vertical", command=canvas.yview)
+        body_frame = tk.Frame(canvas, bg="#F4F6F8")
+
+        body_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=body_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        def _on_mousewheel(event):
+            bbox = canvas.bbox("all")
+            if bbox and bbox[3] > canvas.winfo_height():
+                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
         switch_tab("annonces")
 
