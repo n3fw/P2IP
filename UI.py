@@ -12,6 +12,9 @@ class UI():
         self.db = db_handler
         self.current_user_id = 1
     
+    def resetID(self):
+        self.action_id = None
+    
     def connexionWindow(self):
         self.root = tk.Tk()
         self.action_id = None # <-- AJOUT : Sécurité anti-boucle
@@ -33,7 +36,6 @@ class UI():
         btn_register.pack(pady=10)
 
         self.root.mainloop()
-        self.root.destroy()
 
     def catalogueWindow(self):
         self.root = tk.Tk()
