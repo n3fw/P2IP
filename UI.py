@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+import ctypes as ct
 
 class UI():
     def __init__(self, db_handler):
@@ -11,35 +12,75 @@ class UI():
         self.progress = None
         self.db = db_handler
         self.current_user_id = 1
+        self.font = "Arial"
     
     def resetID(self):
         self.action_id = None
     
+    def print_message(self, mess: str, wind_title: str):
+        ct.windll.user32.MessageBoxW(0, mess, wind_title, 0)
+    
     def connexionWindow(self):
+        """
+        fenêtre pour entrer son mdp et email\n
+        possède un bouton connection une fois les infos entrées, le programme s'arrête si elle sont fausses (pas trouvé un moyen de faire plus \n
+        user-friendly sans passer une plombe à tout changer)\n
+        possède un deuxième bouton de création de compte 
+        action_id == 0 -> connection
+        action_if == 1 -> creation
+        """
         self.root = tk.Tk()
-        self.action_id = None # <-- AJOUT : Sécurité anti-boucle
-        self.root.geometry(self.size)
-        self.root.title("EcoLend - Accueil")
+        self.root.geometry("500x350")
+        self.root.iconbitmap(self.icon)
+        self.root.title("Connection")
+        self.root.configure(bg="white")
 
-        def click_connexion():
-            self.action_id = 1
-            self.root.quit()
-
-        def click_inscription():
+        def connect():
             self.action_id = 0
-            self.root.quit()
+            self.root.destroy()
+        def create():
+            self.action_id = 1
+            self.root.destroy()
 
-        tk.Label(self.root, text="Bienvenue sur EcoLend", font=("Helvetica", 24)).pack(pady=40)
-        btn_connect = tk.Button(self.root, text="Se connecter", width=20, command=click_connexion)
-        btn_connect.pack(pady=10)
-        btn_register = tk.Button(self.root, text="Créer un compte", width=20, command=click_inscription)
-        btn_register.pack(pady=10)
+        tText = tk.Label(self.root, font = (self.font, 20), text = "Connect to your account", bg = "white", fg = "#17E63C")
+        tText.place_configure(relx = 0.19, rely = 0.3)
+
+        uText = tk.Label(self.root, font = (self.font, 10), text = "Email address", bg = "white", fg = "black")
+        uText.place_configure(relx = 0.25, rely = 0.42)
+
+        pText = tk.Label(self.root, font = (self.font, 10), text = "Password", bg = "white", fg = "black")
+        pText.place_configure(relx = 0.25, rely = 0.56)
+
+        iLogo = tk.PhotoImage(file = "ressources/main_icon.png")
+        iLogo = iLogo.subsample(2, 2)
+        iLogoLabel = tk.Label(master = self.root, image = iLogo)
+        iLogoLabel.pack(anchor = 'n')
+
+        uVar = tk.StringVar()
+        uEntry = tk.Entry(self.root, width = 40, textvariable = uVar, bg = "#DBD9D9", fg = "black")
+        uEntry.place_configure(relx = 0.255, rely = 0.48)
+
+        pVar = tk.StringVar()
+        pEntry = tk.Entry(self.root, width = 40, textvariable = pVar, bg = "#DBD9D9", fg = "black")
+        pEntry.place_configure(relx = 0.255, rely = 0.62)
+
+        CreateButton = tk.Button(self.root, text = "Créer un compte", command=create)
+        ConnectButton = tk.Button(self.root, text = "Connection", command=connect)
+        CreateButton.place_configure(rely = 0.72, relx = 0.255)
+        ConnectButton.place_configure(rely = 0.72, relx = 0.595)
 
         self.root.mainloop()
 
+        return (uVar.get(), pVar.get())
+    
+    def creationWindow(self):
+        """
+        cette fenêtre a juste pour objectif de demander les infos de l'utilisateur à entrer pour la création de compte\n
+        les tests sur les infos se font dans le main, après la fin de la fenêtre (genre nom et prénom non nuls, email unique, pwd respectant la stratégie, etc...)"""
+        None
+
     def catalogueWindow(self):
         self.root = tk.Tk()
-        self.action_id = None # <-- AJOUT : Sécurité anti-boucle
         self.root.geometry(self.size)
         self.root.title("EcoLend - Catalogue des objets")
 
@@ -63,9 +104,11 @@ class UI():
         self.root.destroy()
 
     def accueilWindow(self):
+        """
+        fenêtre d'acceuil qui affiche les annonces actuelles, sur laquelle est branché le programme après connection / creation de compte
+        """
         self.root = tk.Tk()
-        self.action_id = None # <-- AJOUT : Sécurité anti-boucle
-        self.root.title("P2IP – Accueil & Recherche")
+        self.root.title("P2IP - Accueil & Recherche")
         self.root.geometry(self.size)
         self.root.configure(bg="#F4F6F8")
 
@@ -85,11 +128,11 @@ class UI():
         self.cat_var = tk.StringVar(self.root, value="Toutes")
 
         def go_to_profil():
-            self.action_id = 7
+            self.action_id = 0
             self.root.quit()
             
         def go_to_liste_annonces():
-            self.action_id = 3
+            self.action_id = 1
             self.root.quit()
 
         topbar = tk.Frame(self.root, bg="#2D6A4F", padx=16, pady=10)
@@ -120,7 +163,6 @@ class UI():
 
     def listeAnnoncesWindow(self):
         self.root = tk.Tk()
-        self.action_id = None # <-- AJOUT : Sécurité anti-boucle
         self.root.title("P2IP – Liste des annonces")
         self.root.geometry(self.size) 
         self.root.configure(bg="#F4F6F8")
@@ -178,7 +220,6 @@ class UI():
 
     def profilWindow(self):
         self.root = tk.Tk()
-        self.action_id = None # <-- AJOUT : Sécurité anti-boucle
         self.root.title("P2IP – Mon Profil") 
         self.root.geometry(self.size)
         self.root.configure(bg="#F4F6F8") 
