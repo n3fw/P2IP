@@ -12,7 +12,7 @@ class DBHandler:
     def __init__(self):
         self.cnx: p.connections.Connection = None
         self.cursor: p.cursors.Cursor = None
-        self.connect_DB("p3rr1goau")
+        self.connect_DB("root")
 
     def connect_DB(self, pwd: str):
         """
