@@ -6,7 +6,7 @@ import os
 class UI():
     def __init__(self, db_handler):
         self.root = None
-        self.size = "600x400"
+        self.size = "1200x900"
         self.color = "000000"
         self.action_id = None
         self.icon = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ressources", "main_icon.ico")
@@ -202,7 +202,7 @@ class UI():
         fenêtre d'acceuil qui affiche les annonces actuelles, sur laquelle est branché le programme après connection / creation de compte
         """
         self.root = tk.Tk()
-        self.root.title("P2IP - Accueil & Recherche")
+        self.root.title("GreenFriend - Accueil & Recherche")
         self.root.geometry(self.size)
         self.root.configure(bg="#F4F6F8")
 
@@ -232,10 +232,20 @@ class UI():
             self.action_id = 1
             self.root.quit()
 
+        def deconnexion():
+            import os, sys
+            if messagebox.askyesno("Déconnexion", "Êtes-vous sûr de vouloir vous déconnecter ?"):
+                if os.path.exists("log.ini"):
+                    os.remove("log.ini") # On supprime la session
+                self.root.destroy()      # On ferme la fenêtre
+                os.execl(sys.executable, sys.executable, *sys.argv)
+
         topbar = tk.Frame(self.root, bg="#2D6A4F", padx=16, pady=10)
         topbar.pack(fill="x")
 
-        tk.Label(topbar, text=" P2IP", font=("Helvetica", 18, "bold"), fg="#FFFFFF", bg="#2D6A4F").pack(side="left")
+        tk.Label(topbar, text=" GreenFriend", font=("Helvetica", 18, "bold"), fg="#FFFFFF", bg="#2D6A4F").pack(side="left")
+
+        tk.Button(topbar, text="Déconnexion", bg="#EF4444", fg="#FFFFFF", relief="flat", font=("Helvetica", 10, "bold"), cursor="hand2", command=deconnexion).pack(side="right", padx=(10, 0))
 
         tk.Button(topbar, text=" Mon profil", bg="#B7E4C7", fg="#2D6A4F", relief="flat",
                   command=go_to_profil).pack(side="right")
@@ -261,7 +271,7 @@ class UI():
             bbox = canvas.bbox("all")
             # On ne scroll QUE si le contenu est plus grand que la zone visible
             if bbox and bbox[3] > canvas.winfo_height():
-                canvas.yview_scroll(int(-1(event.delta/120)), "units")
+                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
         
@@ -279,7 +289,7 @@ class UI():
 
     def listeAnnoncesWindow(self, user_id):
         self.root = tk.Tk()
-        self.root.title("P2IP – Liste des annonces")
+        self.root.title("GreenFriend – Liste des annonces")
         self.root.geometry(self.size) 
         self.root.configure(bg="#F4F6F8")
 
@@ -303,7 +313,7 @@ class UI():
 
         tk.Button(topbar, text="← Retour", bg="#2D6A4F", fg="#B7E4C7", relief="flat",
                   font=("Helvetica", 11), cursor="hand2", command=go_back).pack(side="left")
-        tk.Label(topbar, text=" P2IP - Catalogue", font=("Helvetica", 16, "bold"),
+        tk.Label(topbar, text=" GreenFriend - Catalogue", font=("Helvetica", 16, "bold"),
                  fg="#FFFFFF", bg="#2D6A4F").pack(side="left", padx=16)
 
         main_container = tk.Frame(self.root, bg="#F4F6F8")
@@ -323,7 +333,7 @@ class UI():
         def _on_mousewheel(event):
             bbox = canvas.bbox("all")
             if bbox and bbox[3] > canvas.winfo_height():
-                canvas.yview_scroll(int(-1(event.delta/120)), "units")
+                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
@@ -358,7 +368,7 @@ class UI():
 
     def profilWindow(self, id):
         self.root = tk.Tk()
-        self.root.title("P2IP – Mon Profil") 
+        self.root.title("GreenFriend – Mon Profil") 
         self.root.geometry(self.size)
         self.root.configure(bg="#F4F6F8") 
 
@@ -391,6 +401,23 @@ class UI():
             canvas.unbind_all("<MouseWheel>")
             self.action_id = 0
             self.root.quit()
+
+        def deconnexion_profil():
+            import os, sys
+            if messagebox.askyesno("Déconnexion", "Êtes-vous sûr de vouloir vous déconnecter ?"):
+                if os.path.exists("log.ini"):
+                    os.remove("log.ini") # On supprime le fichier de session
+                self.root.destroy()      # On ferme la fenêtre
+                os.execl(sys.executable, sys.executable, *sys.argv)
+
+        topbar = tk.Frame(self.root, bg="#2D6A4F", padx=16, pady=10) 
+        topbar.pack(fill="x")
+        
+        tk.Button(topbar, text="← Retour", bg="#2D6A4F", fg="#B7E4C7", relief="flat", font=("Helvetica", 11), cursor="hand2", command=go_back).pack(side="left")
+        tk.Label(topbar, text=" GreenFriend  –  Mon Profil", font=("Helvetica", 14, "bold"), fg="#FFFFFF", bg="#2D6A4F").pack(side="left", padx=16) 
+        
+        # --- NOUVEAU BOUTON DÉCONNEXION (Rouge) ---
+        tk.Button(topbar, text="Déconnexion", bg="#EF4444", fg="#FFFFFF", relief="flat", font=("Helvetica", 10, "bold"), cursor="hand2", command=deconnexion_profil).pack(side="right", padx=10)
 
         def switch_tab(key):
             self.active_tab.set(key)
@@ -431,10 +458,6 @@ class UI():
             else:
                 tk.Label(body_frame, text="Vous n'avez aucune annonce en ligne.", font=("Helvetica", 11), bg="#F4F6F8", fg="#6B7280").pack(pady=20)
 
-        topbar = tk.Frame(self.root, bg="#2D6A4F", padx=16, pady=10) 
-        topbar.pack(fill="x")
-        tk.Button(topbar, text="← Retour", bg="#2D6A4F", fg="#B7E4C7", relief="flat", font=("Helvetica", 11), cursor="hand2", command=go_back).pack(side="left")
-        tk.Label(topbar, text=" P2IP  –  Mon Profil", font=("Helvetica", 14, "bold"), fg="#FFFFFF", bg="#2D6A4F").pack(side="left", padx=16) 
 
         header = tk.Frame(self.root, bg="#FFFFFF", padx=24, pady=20, relief="flat", bd=1)
         header.pack(fill="x")
@@ -580,7 +603,7 @@ class UI():
 
     def detailAnnonceWindow(self, annonce_id):
         self.root = tk.Tk()
-        self.root.title("P2IP - Détails de l'annonce")
+        self.root.title("GreenFriend - Détails de l'annonce")
         self.root.geometry(self.size)
         self.root.configure(bg="#F4F6F8")
 
@@ -609,13 +632,13 @@ class UI():
             # Fenêtre popup de confirmation OUI / NON
             confirm = messagebox.askyesno("Confirmation", "Êtes-vous certain de vouloir réserver cet objet ?")
             if confirm:
-                # Si OUI, on met à jour le statut dans la base de données
-                update_query = "UPDATE listings SET status = 'réservé' WHERE id = %s"
-                self.db.c_query(update_query, (self.selected_annonce_id,), ret=False)
+                # CORRECTION ICI : On utilise bien 'exchanged' selon l'ENUM SQL, et annonce_id
+                update_query = "UPDATE listings SET status = 'exchanged' WHERE id = %s"
+                self.db.c_query(update_query, (annonce_id,), ret=False)
                 
                 messagebox.showinfo("Succès", "L'objet a bien été réservé !")
-                self.action_id = 2 # Retour à l'accueil pour constater qu'il a disparu
-                self.root.destroy()
+                self.action_id = -1 # Retour au catalogue
+                self.root.quit()
 
         # 3. Construction de l'interface
         topbar = tk.Frame(self.root, bg="#2D6A4F", padx=16, pady=10)
